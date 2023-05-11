@@ -1,32 +1,31 @@
 ### Smali trace injection
 
-An improved implementation of the smali trace injection script
 
-An alternative implementation of the smali trace: https://github.com/soulseekah/smalter - does not consider methods containing >= 16 registers, which complicates the injection of additional variables. 
-The problem is corrected in this project (see ```smali_trace.py```), and tested independently by using ```adb logcat```
+A tool that helps automatically track method calls in a decompiled Android project.
+<br>
+<br>
 
-
-In the decompilation process of .smali source files, the following tools were used:
+#### 1. Decompilation of the source code
+The following tools (for which the script has been tested) are required to decompile the APK sources:
 - ApkStudio: https://github.com/vaibhavpandeyvpz/apkstudio
-- ApkTool (v 2.7.0): https://github.com/iBotPeaches/Apktool, 
-- Jadx (v 17.0.5): https://github.com/skylot/jadx
+- ApkTool (version 2.7.0): https://github.com/iBotPeaches/Apktool,
+- Jadx (version 17.0.5): https://github.com/skylot/jadx
 - Uber APK Signer (1.3.0): https://github.com/patrickfav/uber-apk-signer
-- ADB (v 1.0.41), 
+- ADB (version 1.0.41)
 
 #### The purpose of the project:
-> Add method execution trace to all .smali classes in a package directory. (Injection of PrintStream calls 
-> into each and every method.)
+> Inject method execution traces into all .smali classes in the specified directory. (Implementation of PrintStream calls
+> at the beginning of each method.)
 
-#### Capabilities:
-- The script supports trace injection for all methods, only excluding methods which are defined as <b>abstract</b> or <b>native</b> (by definition, these methods can not be traced).
+#### Features:
+- The script supports implementing tracing for all methods except methods defined as <b>abstract</b> or <b>native</b>.
+
 
 #### Additional notes:
-- The 4-bit <b>.locals<b> (<b>.registers</b>) reference limit 
-- System.out.println is used in favor of android.util.Log.i,
-because it does not require the application context to be initialized). It is important to note, that some devices may not support System.out.println output in the ```adb logcat```.
+- Alternative implementation of smali tracing: https://github.com/soulseekah/smalter - does not consider methods containing >= 16 registers, making it difficult to introduce new registers and variables.
+      
+    The problem can be avoided in the [project](https://github.com/al3xkras/smali_trace) using StackTrace and static method calls (see ```smali_trace.py```)
+- System.out.println is used in favor of android.util.Log.i in order to avoid application context initialization exceptions.
+- <b>System.out.println</b> calls could be disabled by default for some Android devices (although, most modern AOSP-based ROMs support this feature).
 
-
-
-Usage: smalter.py <classes dir> [classes dir] [classes dir] ...
-
-smali 'em back up and watch the logs ;) shhh...
+Any suggestions or contributions to the project would be appreciated.
