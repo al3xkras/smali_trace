@@ -16,7 +16,7 @@ static_void_trace="""
 
     move-result-object v0
 
-    const/4 v1, 0x2
+    const/4 v1, 0x3
 
     aget-object v0, v0, v1
 
@@ -79,6 +79,7 @@ for root,dir_,filenames in os.walk(directory):
     for filename_ in filenames:
         filename=os.path.join(root, filename_)
         print(filename)
+        package_name=""
         if filename.endswith(".smali"):
             filepath = os.path.join(directory, filename)
 
@@ -98,8 +99,10 @@ for root,dir_,filenames in os.walk(directory):
                 while i < len(lines):
                     l_i = l(i)
                     if l_i.startswith(".class"):
-                        class_name=l_i.split()[1]
+                        class_name=l_i.split()[-1][1:-1]
                         package_name = ".".join(class_name.split(".")[:-1])
+                        print("CLASS: ",class_name,package_name)
+
                         file.write(lines[i])
                         i+=1
                         continue
@@ -112,7 +115,7 @@ for root,dir_,filenames in os.walk(directory):
                     if l_i.startswith(".locals") and method_predicate(l(i-1)):
                         locals_count = int(l_i.split()[1])
                         file.write(".locals {}\n".format(locals_count))
-                        file.write(f"    invoke-static {{}}, L{package_name};->traceLastMethodCall()V\n")
+                        file.write(f"    invoke-static {{}}, L{class_name};->traceLastMethodCall()V\n")
                         i+=1
                         continue
 
