@@ -9,6 +9,8 @@ ignored_packages = [
     "java", "javax",
 ]
 
+ignored_methods = set()
+
 with open("./trace.smali", "r") as f:
     static_void_trace = f.read()
 
@@ -17,29 +19,34 @@ for root, dir_, filenames in os.walk(directory):
         print("package ignored:", root)
         continue
     for filename_ in filenames:
-        filename = os.path.join(root, filename_)
-        if "trace" in filename:
+        if "trace" in filename_:
             continue
+        filename = os.path.join(root, filename_)
         print(filename)
         package_name = ""
         if filename.endswith(".smali"):
             filepath = os.path.join(directory, filename)
 
             with open(filepath, "r") as file:
-                lines = file.readlines()
+                lines = [x+"\n" for x in file.read().replace(static_void_trace, "\n").split("\n")]
 
             with open(filepath, "w") as file:
                 i = 0
 
+
                 def strip_line(i_):
                     return lines[i_].strip()
+
 
                 def method_predicate(signature):
                     return not "abstract" in signature \
                         and not "native" in signature
 
+
                 class_name = None
                 trace_added = False
+                method_name = None
+                trace_line = "traceLastMethodCall"
                 while i < len(lines):
                     l_i = strip_line(i)
                     if l_i.startswith(".class"):
@@ -51,22 +58,24 @@ for root, dir_, filenames in os.walk(directory):
                         i += 1
                         continue
 
-                    if l_i.startswith(".method") and not trace_added:
-                        if "traceLastMethodCall" not in l_i:
-                            file.write("\n" + static_void_trace + "\n" + lines[i])
-                        else:
-                            file.write(lines[i])
+                    if l_i.startswith(".method"):
+                        file.write(l_i)
                         i += 1
                         trace_added = True
+                        try:
+                            method_name = l_i.split()[-1].split("()")[0]
+                        except IndexError:
+                            pass
+                        print("METHOD: ", method_name)
                         continue
 
-                    if l_i.startswith(".locals") and method_predicate(strip_line(i - 1)):
-                        locals_count = int(l_i.split()[1])
-                        file.write("\n    .locals {}\n".format(locals_count))
-                        if class_name is not None:
-                            file.write(f"    invoke-static {{}}, L{class_name};->traceLastMethodCall()V\n")
+                    if method_name not in ignored_methods \
+                            and trace_line in lines[i]:
+                        print("trace removed:", class_name, method_name)
                         i += 1
-                        continue
+                    elif method_name in ignored_methods \
+                            and trace_line in lines[i]:
+                        print("method skipped:", class_name, method_name)
 
                     file.write(lines[i])
                     i += 1
