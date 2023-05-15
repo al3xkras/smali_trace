@@ -9,6 +9,13 @@ ignored_packages = [
     "java", "javax",
 ]
 
+ignored_methods = [
+    "handleMessage",
+    "executeGLThreadJobs",
+    "isFinishing",
+    "access$300"
+]
+
 with open("./trace.smali", "r") as f:
     static_void_trace = f.read()
 
@@ -38,8 +45,13 @@ for root, dir_, filenames in os.walk(directory):
                     return not "abstract" in signature \
                         and not "native" in signature
 
+                def is_ignored_method(signature):
+                    return signature is None or \
+                        any(x in signature for x in ignored_methods)
+
                 class_name = None
                 trace_added = False
+                method_name = None
                 while i < len(lines):
                     l_i = strip_line(i)
                     if l_i.startswith(".class"):
@@ -59,8 +71,14 @@ for root, dir_, filenames in os.walk(directory):
                         i += 1
                         trace_added = True
                         continue
+                    elif l_i.startswith(".method"):
+                        try:
+                            method_name = l_i.split()[-1].split("(")[0]
+                        except IndexError:
+                            pass
 
-                    if l_i.startswith(".locals") and method_predicate(strip_line(i - 1)):
+                    if l_i.startswith(".locals") and method_predicate(strip_line(i - 1)) and not is_ignored_method(method_name):
+
                         locals_count = int(l_i.split()[1])
                         file.write("\n    .locals {}\n".format(locals_count))
                         if class_name is not None:
